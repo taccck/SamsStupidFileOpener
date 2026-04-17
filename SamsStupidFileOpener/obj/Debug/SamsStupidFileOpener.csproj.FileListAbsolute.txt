@@ -1,0 +1,16 @@
+C:\Projects\SamsStupidFileOpener\SamsStupidFileOpener\bin\Debug\SamsStupidFileOpener.dll
+C:\Projects\SamsStupidFileOpener\SamsStupidFileOpener\bin\Debug\SamsStupidFileOpener.pdb
+C:\Projects\SamsStupidFileOpener\SamsStupidFileOpener\bin\Debug\SamsStupidFileOpener.pkgdef
+C:\Projects\SamsStupidFileOpener\SamsStupidFileOpener\bin\Debug\SamsStupidFileOpener.vsix
+C:\Projects\SamsStupidFileOpener\SamsStupidFileOpener\bin\Debug\extension.vsixmanifest
+C:\Projects\SamsStupidFileOpener\SamsStupidFileOpener\obj\Debug\SamsStupidFileOpener.csproj.AssemblyReference.cache
+C:\Projects\SamsStupidFileOpener\SamsStupidFileOpener\obj\Debug\_EmptyResource.resources
+C:\Projects\SamsStupidFileOpener\SamsStupidFileOpener\obj\Debug\SamsStupidFileOpener.csproj.GenerateResource.cache
+C:\Projects\SamsStupidFileOpener\SamsStupidFileOpener\obj\Debug\SamsStupidFileOpener.csproj.CoreCompileInputs.cache
+C:\Projects\SamsStupidFileOpener\SamsStupidFileOpener\obj\Debug\SamsStupidFileOpener.dll
+C:\Projects\SamsStupidFileOpener\SamsStupidFileOpener\obj\Debug\SamsStupidFileOpener.pdb
+C:\Projects\SamsStupidFileOpener\SamsStupidFileOpener\obj\Debug\SamsStupidFileOpener.pkgdef
+C:\Projects\SamsStupidFileOpener\SamsStupidFileOpener\obj\Debug\SamsStupidFileOpener.latest.pkgdef
+C:\Projects\SamsStupidFileOpener\SamsStupidFileOpener\obj\Debug\extension.vsixmanifest
+C:\Projects\SamsStupidFileOpener\SamsStupidFileOpener\obj\Debug\files.json
+C:\Projects\SamsStupidFileOpener\SamsStupidFileOpener\obj\Debug\createTemplateManifests.cache
