@@ -1,2 +1,1 @@
-# SamsStupidFileOpener
-Sorts files with the same extension onto the same split pane on open
+Visual studio extension that makes it easier to work in a split layout. When a file gets opened, it opens into a pane where a file of the same type already open.
