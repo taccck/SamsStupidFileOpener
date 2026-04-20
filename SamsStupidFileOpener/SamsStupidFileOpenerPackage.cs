@@ -35,6 +35,7 @@ namespace SamsStupidFileOpener
         private uint _rdtEventsCookie;
         private IVsRunningDocumentTable _rdt;
         private DTE2 _dte;
+        private IVsUIShell _uiShell;
 
         private string _lastProcessed;
 
@@ -45,6 +46,7 @@ namespace SamsStupidFileOpener
             _dte = serviceProvider.GetService(typeof(DTE)) as DTE2;
             _rdt = serviceProvider.GetService(typeof(SVsRunningDocumentTable)) as IVsRunningDocumentTable;
             _rdt?.AdviseRunningDocTableEvents(this, out _rdtEventsCookie);
+            _uiShell = serviceProvider.GetService(typeof(SVsUIShell)) as IVsUIShell;
         }
 
         /*looks for another document with the same file extension, if found close this document -> activate the second documents window -> open this document*/
@@ -55,12 +57,21 @@ namespace SamsStupidFileOpener
             if (fFirstShow == 0)
                 return VSConstants.S_OK;
 
+            //TODO: if already open in a tab, return
+
             pFrame.GetProperty((int)__VSFPROPID.VSFPROPID_pszMkDocument, out object filePath);
             string currFile = filePath?.ToString();
 
             /*cache last processed to avoid infinite for loops of closing and opening*/
-            if (currFile == null || currFile.Length == 0 || currFile == _lastProcessed)
+            if (currFile == null || currFile.Length == 0)
                 return VSConstants.S_OK;
+
+            /*catch the last processed doc when we reopen it*/
+            if (currFile == _lastProcessed)
+            {
+                _lastProcessed = null;
+                return VSConstants.S_OK;
+            }
             _lastProcessed = currFile;
 
             string currentExt = Path.GetExtension(currFile);
@@ -75,12 +86,15 @@ namespace SamsStupidFileOpener
                 if (docPathName == currFile || Path.GetExtension(docPathName) != currentExt)
                     continue;
 
+                //TODO: prioritize clicked tabs
+
                 Document doc = _dte.Documents.Cast<Document>().FirstOrDefault(d =>
                 {
                     ThreadHelper.ThrowIfNotOnUIThread();
                     return d.FullName == currFile;
                 });
                 doc?.Close(vsSaveChanges.vsSaveChangesNo);
+                //TODO: clear navigation history for this window
                 window.Activate();
                 _dte.ItemOperations.OpenFile(currFile, EnvDTE.Constants.vsViewKindCode);
                 break;

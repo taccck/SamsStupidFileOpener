@@ -1,0 +1,6 @@
+#VS files
+.vs/
+
+#debug files
+SamsStupidFileOpener\bin\Debug
+SamsStupidFileOpener\obj\Debug
