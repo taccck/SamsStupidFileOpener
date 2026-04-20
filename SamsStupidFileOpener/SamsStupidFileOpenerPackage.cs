@@ -89,13 +89,14 @@ namespace SamsStupidFileOpener
                 if (Path.GetExtension(docPathName) != currentExt)
                     continue;
 
-                //TODO: prioritize clicked tabs
+                //TODO: prioritize the selected tab in a tab group
                 if (bestWindow == null)
                 {
                     bestWindow = window;
                 }
             }
 
+            /*close and repoen in correct document group*/
             if (bestWindow != null)
             {
                 Document doc = _dte.Documents.Cast<Document>().FirstOrDefault(d =>
@@ -104,9 +105,13 @@ namespace SamsStupidFileOpener
                     return d.FullName == currFile;
                 });
                 doc?.Close(vsSaveChanges.vsSaveChangesNo);
-                //TODO: clear navigation history for this window
                 bestWindow.Activate();
-                _dte.ItemOperations.OpenFile(currFile, EnvDTE.Constants.vsViewKindCode);
+                Window newWindow = _dte.ItemOperations.OpenFile(currFile, EnvDTE.Constants.vsViewKindCode);
+
+                /*removed bestWindow from navigation history*/
+                _dte.ExecuteCommand("View.NavigateBackward");
+                _dte.ExecuteCommand("View.NavigateBackward");
+                newWindow.Activate();
             }
 
             return VSConstants.S_OK;
