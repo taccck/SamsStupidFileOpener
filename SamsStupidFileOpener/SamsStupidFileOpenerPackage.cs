@@ -57,16 +57,14 @@ namespace SamsStupidFileOpener
             if (fFirstShow == 0)
                 return VSConstants.S_OK;
 
-            //TODO: if already open in a tab, return
-
             pFrame.GetProperty((int)__VSFPROPID.VSFPROPID_pszMkDocument, out object filePath);
             string currFile = filePath?.ToString();
 
-            /*cache last processed to avoid infinite for loops of closing and opening*/
-            if (currFile == null || currFile.Length == 0)
+            string currentExt = Path.GetExtension(currFile);
+            if (currFile == null || currFile.Length == 0 || currentExt == null || currentExt.Length == 0)
                 return VSConstants.S_OK;
 
-            /*catch the last processed doc when we reopen it*/
+            /*cache last processed to avoid infinite for loops of closing and opening*/
             if (currFile == _lastProcessed)
             {
                 _lastProcessed = null;
@@ -74,8 +72,8 @@ namespace SamsStupidFileOpener
             }
             _lastProcessed = currFile;
 
-            string currentExt = Path.GetExtension(currFile);
-
+            //TODO: loop from back to prioritize most recently open windows
+            Window bestWindow = null;
             foreach (Window window in _dte.Windows)
             {
                 if (window == null || window.Document == null || window.Visible == false)
@@ -83,11 +81,23 @@ namespace SamsStupidFileOpener
 
                 string docPathName = window.Document.FullName;
 
-                if (docPathName == currFile || Path.GetExtension(docPathName) != currentExt)
+                /*if a window is already open for this doc then we don't want to sort it*/
+                if (docPathName == currFile)
+                    return VSConstants.S_OK;
+
+
+                if (Path.GetExtension(docPathName) != currentExt)
                     continue;
 
                 //TODO: prioritize clicked tabs
+                if (bestWindow == null)
+                {
+                    bestWindow = window;
+                }
+            }
 
+            if (bestWindow != null)
+            {
                 Document doc = _dte.Documents.Cast<Document>().FirstOrDefault(d =>
                 {
                     ThreadHelper.ThrowIfNotOnUIThread();
@@ -95,9 +105,8 @@ namespace SamsStupidFileOpener
                 });
                 doc?.Close(vsSaveChanges.vsSaveChangesNo);
                 //TODO: clear navigation history for this window
-                window.Activate();
+                bestWindow.Activate();
                 _dte.ItemOperations.OpenFile(currFile, EnvDTE.Constants.vsViewKindCode);
-                break;
             }
 
             return VSConstants.S_OK;
