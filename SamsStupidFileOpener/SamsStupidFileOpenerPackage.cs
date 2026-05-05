@@ -3,11 +3,13 @@ using EnvDTE80;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.Text;
 using System;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
 using Task = System.Threading.Tasks.Task;
 
 namespace SamsStupidFileOpener
@@ -32,10 +34,8 @@ namespace SamsStupidFileOpener
 
     public class DocumentEventListener : IVsRunningDocTableEvents
     {
-        private uint _rdtEventsCookie;
         private IVsRunningDocumentTable _rdt;
         private DTE2 _dte;
-        private IVsUIShell _uiShell;
 
         private string _lastProcessed;
 
@@ -45,8 +45,7 @@ namespace SamsStupidFileOpener
 
             _dte = serviceProvider.GetService(typeof(DTE)) as DTE2;
             _rdt = serviceProvider.GetService(typeof(SVsRunningDocumentTable)) as IVsRunningDocumentTable;
-            _rdt?.AdviseRunningDocTableEvents(this, out _rdtEventsCookie);
-            _uiShell = serviceProvider.GetService(typeof(SVsUIShell)) as IVsUIShell;
+            _rdt?.AdviseRunningDocTableEvents(this, out _);
         }
 
         /*looks for another document with the same file extension, if found close this document -> activate the second documents window -> open this document*/
@@ -72,7 +71,12 @@ namespace SamsStupidFileOpener
             }
             _lastProcessed = currFile;
 
-            //TODO: loop from back to prioritize most recently open windows
+            /*no action needed if the active document alredy has the correct file extension*/
+            string activeFile = _dte.ActiveWindow?.Document?.FullName;
+            string activeExt = Path.GetExtension(activeFile);
+            if (activeExt == currentExt)
+                return VSConstants.S_OK;
+
             Window bestWindow = null;
             foreach (Window window in _dte.Windows)
             {
@@ -89,7 +93,7 @@ namespace SamsStupidFileOpener
                 if (Path.GetExtension(docPathName) != currentExt)
                     continue;
 
-                //TODO: prioritize the selected tab in a tab group
+                //TODO: prioritize active tabs
                 if (bestWindow == null)
                 {
                     bestWindow = window;
@@ -99,22 +103,50 @@ namespace SamsStupidFileOpener
             /*close and repoen in correct document group*/
             if (bestWindow != null)
             {
-                Document doc = _dte.Documents.Cast<Document>().FirstOrDefault(d =>
-                {
-                    ThreadHelper.ThrowIfNotOnUIThread();
-                    return d.FullName == currFile;
-                });
-                doc?.Close(vsSaveChanges.vsSaveChangesNo);
-                bestWindow.Activate();
-                Window newWindow = _dte.ItemOperations.OpenFile(currFile, EnvDTE.Constants.vsViewKindCode);
-
-                /*removed bestWindow from navigation history*/
-                _dte.ExecuteCommand("View.NavigateBackward");
-                _dte.ExecuteCommand("View.NavigateBackward");
-                newWindow.Activate();
+                ReopenDocumentAsync(currFile, bestWindow);
             }
 
             return VSConstants.S_OK;
+        }
+
+        private async Task ReopenDocumentAsync(string filePathToReopen, Window windowToOpenFrom)
+        {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+            if (filePathToReopen == null || windowToOpenFrom == null)
+                return;
+
+            /*wait so the text selection has time to load in*/
+            await Task.Delay(100);
+
+            Document doc = _dte.Documents.Cast<Document>().FirstOrDefault(d =>
+            {
+                ThreadHelper.ThrowIfNotOnUIThread();
+                return d.FullName == filePathToReopen;
+            });
+
+            if (doc == null)
+                return;
+
+            int line = 0;
+            if (doc.Selection is TextSelection startSelection)
+            {
+                line = startSelection.CurrentLine;
+            }
+
+            doc.Close(vsSaveChanges.vsSaveChangesNo);
+
+            windowToOpenFrom.Activate();
+            Window newWindow = _dte.ItemOperations.OpenFile(filePathToReopen, EnvDTE.Constants.vsViewKindCode);
+
+            /*removed windowToOpenFrom from navigation history*/
+            _dte.ExecuteCommand("View.NavigateBackward");
+            _dte.ExecuteCommand("View.NavigateBackward");
+            newWindow.Activate();
+            if (newWindow.Selection is TextSelection endSelection)
+            {
+                endSelection?.GotoLine(line);
+            }
         }
 
         public int OnAfterDocumentWindowHide(uint docCookie, IVsWindowFrame pFrame) => VSConstants.S_OK;

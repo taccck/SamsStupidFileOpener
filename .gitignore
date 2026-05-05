@@ -2,5 +2,6 @@
 .vs/
 
 #debug files
-SamsStupidFileOpener/bin/Debug
+SamsStupidFileOpener/bin
 SamsStupidFileOpener/obj/Debug
+SamsStupidFileOpener/obj/Release
